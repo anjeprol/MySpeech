@@ -12,6 +12,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -20,12 +23,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageButton mMicImageButton;
     private Switch      mLangSwitch;
     private String      mLanguageString;
+    private AdView      mAdView;
     private final int   REQ_CODE_SPEECH_INPUT = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Load an ad into the AdMob banner view.
+        mAdView  = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder()
+                                            .setRequestAgent("android_studio:ad_template")
+                                            .build();
+
         mSpeechInputTextView    = (TextView) findViewById(R.id.txtSpeechInput);
         mMicImageButton         = (ImageButton) findViewById(R.id.btnSpeak);
         mLangSwitch             = (Switch) findViewById(R.id.lang);
@@ -33,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //default lang English
         mLanguageString = getString(R.string.en);
         mLangSwitch.setText(getString(R.string.lang));
+        mAdView.loadAd(adRequest);
 
         mLangSwitch.setOnCheckedChangeListener(this);
         mMicImageButton.setOnClickListener(this);
@@ -46,6 +58,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 promptSpeechInput();
                 break;
         }
+    }
+
+    @Override
+    public void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
+        super.onDestroy();
     }
 
     private void promptSpeechInput() {
