@@ -12,7 +12,4 @@
     <string name="lang">English</string>
     <string name="lang2">Spanish</string>
 
-    <!-- AdMob ad unit IDs -->
-    <string name="banner_home_footer">ca-app-pub-9708372782088183/7891163358</string>
-
 </resources>

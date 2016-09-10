@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AdMob ad unit IDs -->
+    <string translatable="false" name="keyAds">ca-app-pub-9708372782088183/4506936556</string>
+</resources>
