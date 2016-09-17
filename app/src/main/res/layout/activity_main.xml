@@ -68,4 +68,11 @@
         android:layout_centerHorizontal="true">
     </com.google.android.gms.ads.AdView>
 
+    <ImageView
+        android:id="@+id/donate"
+        android:layout_width="150dp"
+        android:layout_height="40dp"
+        android:src="@drawable/donate"
+        />
+
 </RelativeLayout>

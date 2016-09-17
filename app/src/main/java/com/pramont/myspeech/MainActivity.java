@@ -1,35 +1,78 @@
 package com.pramont.myspeech;
 
 import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.speech.RecognizerIntent;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.method.DigitsKeyListener;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.paypal.android.sdk.payments.PayPalConfiguration;
+import com.paypal.android.sdk.payments.PayPalPayment;
+import com.paypal.android.sdk.payments.PayPalService;
+import com.paypal.android.sdk.payments.PaymentActivity;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener{
+
+    private final int   REQ_CODE_SPEECH_INPUT = 100;
     private TextView    mSpeechInputTextView;
     private ImageButton mMicImageButton;
+    private ImageView   mDonateImageView;
     private Switch      mLangSwitch;
     private String      mLanguageString;
+    private String      mDonationAmount;
     private AdView      mAdView;
-    private final int   REQ_CODE_SPEECH_INPUT = 100;
+
+    /**
+     * - Set to PayPalConfiguration.ENVIRONMENT_PRODUCTION to move real money.
+     *
+     * - Set to PayPalConfiguration.ENVIRONMENT_SANDBOX to use your test credentials
+     * from https://developer.paypal.com
+     *
+     * - Set to PayPalConfiguration.ENVIRONMENT_NO_NETWORK to kick the tires
+     * without communicating to PayPal's servers.
+     */
+    private static final String CONFIG_ENVIRONMENT = PayPalConfiguration.ENVIRONMENT_PRODUCTION;
+
+    // note that these credentials will differ between live & sandbox environments.
+    private static final String CONFIG_CLIENT_ID = "AfvDWvb54zxtxFLMUF-YR2hQeJD-sRky3hxbX9V0Buhdi0-nbvm8vWZ6dE8Ry3qOxCo99ftzlY-0Wkn1";
+
+    private static final int REQUEST_CODE_PAYMENT = 1;
+
+    private static PayPalConfiguration config = new PayPalConfiguration()
+            .environment(CONFIG_ENVIRONMENT)
+            .clientId(CONFIG_CLIENT_ID)
+            // The following are only used in PayPalFuturePaymentActivity.
+            .merchantName("pramont")
+            .merchantPrivacyPolicyUri(Uri.parse("https://www.example.com/privacy"))
+            .merchantUserAgreementUri(Uri.parse("https://www.example.com/legal"));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mDonationAmount = getString(R.string.amount);
 
         // Load an ad into the AdMob banner view.
         mAdView  = (AdView) findViewById(R.id.adView);
@@ -39,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mSpeechInputTextView    = (TextView) findViewById(R.id.txtSpeechInput);
         mMicImageButton         = (ImageButton) findViewById(R.id.btnSpeak);
+        mDonateImageView        = (ImageView) findViewById(R.id.donate);
         mLangSwitch             = (Switch) findViewById(R.id.lang);
 
         //default lang English
@@ -48,6 +92,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mLangSwitch.setOnCheckedChangeListener(this);
         mMicImageButton.setOnClickListener(this);
+        mDonateImageView.setOnClickListener(this);
+
+        Intent intent = new Intent(this, PayPalService.class);
+        intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
+        startService(intent);
     }
 
     @Override
@@ -57,6 +106,98 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btnSpeak:
                 promptSpeechInput();
                 break;
+            case R.id.donate:
+                alertDonate();
+                break;
+        }
+    }
+
+    private void donate() {
+
+        /*
+         * PAYMENT_INTENT_SALE will cause the payment to complete immediately.
+         * Change PAYMENT_INTENT_SALE to
+         *   - PAYMENT_INTENT_AUTHORIZE to only authorize payment and capture funds later.
+         *   - PAYMENT_INTENT_ORDER to create a payment for authorization and capture
+         *     later via calls from your server.
+         *
+         * Also, to include additional payment details and an item list, see getStuffToBuy() below.
+         */
+            PayPalPayment thingToBuy = getThingToBuy(PayPalPayment.PAYMENT_INTENT_SALE);
+
+        /*
+         * See getStuffToBuy(..) for examples of some available payment options.
+         */
+
+            Intent intent = new Intent(MainActivity.this, PaymentActivity.class);
+            // send the same configuration for restart resiliency
+            intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
+            intent.putExtra(PaymentActivity.EXTRA_PAYMENT, thingToBuy);
+            startActivityForResult(intent, REQUEST_CODE_PAYMENT);
+    }
+
+    private PayPalPayment getThingToBuy(String paymentIntent) {
+        return new PayPalPayment(new BigDecimal(mDonationAmount),
+                getString(R.string.currency),
+                getString(R.string.thing_to_buy),
+                paymentIntent);
+    }
+
+    private void alertDonate(){
+        // get prompts.xml view
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        View promptsView = layoutInflater.inflate(R.layout.prompt, null);
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+
+        // set prompts.xml to alertdialog builder
+        alertDialogBuilder.setView(promptsView);
+
+        final EditText userInput = (EditText) promptsView.findViewById(R.id.InputAlertDialog);
+        userInput.requestFocus();
+
+        ((InputMethodManager)this.getSystemService(Context.INPUT_METHOD_SERVICE)).
+                toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+
+        // set dialog message
+        alertDialogBuilder
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.lb_ok),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                String newAmount;
+                                // get user input and set it to result
+                                // edit text
+                                newAmount = userInput.getText().toString().trim();
+                                if(!newAmount.isEmpty() && !newAmount.equalsIgnoreCase("0") )
+                                {
+                                    mDonationAmount = userInput.getText().toString().trim();
+                                }
+                                donate();
+                                hideKeyboard();
+                            }
+                        })
+                .setNegativeButton(getString(R.string.lb_cancel),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                dialog.cancel();
+                                hideKeyboard();
+                            }
+                        });
+
+        // create alert dialog
+        AlertDialog alertDialog = alertDialogBuilder.create();
+
+        // show it
+        alertDialog.show();
+
+    }
+
+    private void hideKeyboard(){
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager inputMethodManager = (InputMethodManager)this.getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 

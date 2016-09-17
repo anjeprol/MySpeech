@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.pramont.myspeech">
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.pramont.myspeech">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-sdk android:minSdkVersion="15" tools:overrideLibrary="com.paypal.android.sdk.payments"/>
 
     <application
         android:allowBackup="true"

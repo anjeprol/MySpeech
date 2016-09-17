@@ -12,4 +12,11 @@
     <string name="lang">English</string>
     <string name="lang2">Spanish</string>
 
+    <string name="currency">USD</string>
+    <string name="thing_to_buy">Donation to my speech</string>
+    <string name="amount">2.00</string>
+    <string name="msg_donation_amount">Donation amount:</string>
+    <string name="lb_ok">Ok</string>
+    <string name="lb_cancel">Cancel</string>
+
 </resources>
