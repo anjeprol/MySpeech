@@ -2,8 +2,9 @@
 <resources>
     <color name="colorPrimary">#ce1654</color>
     <color name="colorPrimaryDark">#c2185b</color>
-    <color name="colorAccent">#c10851</color>
+    <color name="colorAccent">#f2b23a</color>
     <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
     <color name="bg_gradient_start">#7b0f6b</color>
     <color name="bg_gradient_end">#b40648</color>
 </resources>

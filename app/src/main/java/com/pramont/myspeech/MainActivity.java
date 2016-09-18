@@ -4,12 +4,10 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.speech.RecognizerIntent;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.method.DigitsKeyListener;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -23,14 +21,13 @@ import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.paypal.android.sdk.payments.PayPalConfiguration;
 import com.paypal.android.sdk.payments.PayPalPayment;
 import com.paypal.android.sdk.payments.PayPalService;
 import com.paypal.android.sdk.payments.PaymentActivity;
+import com.pramont.myspeech.constants.PayPalSettings;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener{
 
@@ -43,29 +40,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String      mDonationAmount;
     private AdView      mAdView;
 
-    /**
-     * - Set to PayPalConfiguration.ENVIRONMENT_PRODUCTION to move real money.
-     *
-     * - Set to PayPalConfiguration.ENVIRONMENT_SANDBOX to use your test credentials
-     * from https://developer.paypal.com
-     *
-     * - Set to PayPalConfiguration.ENVIRONMENT_NO_NETWORK to kick the tires
-     * without communicating to PayPal's servers.
-     */
-    private static final String CONFIG_ENVIRONMENT = PayPalConfiguration.ENVIRONMENT_PRODUCTION;
-
-    // note that these credentials will differ between live & sandbox environments.
-    private static final String CONFIG_CLIENT_ID = "AZLX8-vxk6VCqm27DN08x5eg4OKr6UlVoSrGq1b430wbpjsJV5ySYydPHdcuTSnxsoigMLJZiOlMVe_Z";
-
-    private static final int REQUEST_CODE_PAYMENT = 1;
-
-    private static PayPalConfiguration config = new PayPalConfiguration()
-            .environment(CONFIG_ENVIRONMENT)
-            .clientId(CONFIG_CLIENT_ID)
-            // The following are only used in PayPalFuturePaymentActivity.
-            .merchantName("pramont")
-            .merchantPrivacyPolicyUri(Uri.parse("https://www.example.com/privacy"))
-            .merchantUserAgreementUri(Uri.parse("https://www.example.com/legal"));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDonateImageView.setOnClickListener(this);
 
         Intent intent = new Intent(this, PayPalService.class);
-        intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
+        intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, PayPalSettings.CONFIG);
         startService(intent);
     }
 
@@ -125,15 +99,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
          */
             PayPalPayment thingToBuy = getThingToBuy(PayPalPayment.PAYMENT_INTENT_SALE);
 
-        /*
-         * See getStuffToBuy(..) for examples of some available payment options.
-         */
-
             Intent intent = new Intent(MainActivity.this, PaymentActivity.class);
             // send the same configuration for restart resiliency
-            intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
+            intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, PayPalSettings.CONFIG);
             intent.putExtra(PaymentActivity.EXTRA_PAYMENT, thingToBuy);
-            startActivityForResult(intent, REQUEST_CODE_PAYMENT);
+            startActivityForResult(intent, PayPalSettings.REQUEST_CODE_PAYMENT);
     }
 
     private PayPalPayment getThingToBuy(String paymentIntent) {
